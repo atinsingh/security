@@ -37,7 +37,11 @@ pipeline {
                 sh 'mvn compile'
             }
         }
-
+       stage('Static Code Analaysis') {
+            steps {
+                sh 'mvn sonar:sonar'
+            }
+        }
          stage('Unit Test') {
             steps {
                 sh 'mvn test'
