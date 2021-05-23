@@ -1,39 +1,64 @@
-node  {
-    def Author = 'Atin Singh'
-
-    stage('Clean WS') {
-        sh 'echo "Cleaning WorkSpace"'
-        cleanWs();
-
+pipeline {
+    agent any
+    environment {
+        APP_HOME='/home/app'
+        PRAGRA_BATCH='devs'
     }
-    stage('Declartive Checkout'){
-        checkout scm;
+    options { 
+        quietPeriod(30) 
     }
-    stage('Compile') {
-        withMaven(jdk: 'jdk8', maven:'m3') {
-            sh 'mvn compile'
+    parameters { 
+            choice(name: 'ENV_TO_DEPLOY', 
+            choices: ['ST', 'UAT', 'STAGING'], description: 'Select a Env to deploy') 
+
+             booleanParam(name: 'RUN', defaultValue: true, description: 'SELECT TO RUN')
+    }
+    triggers {
+        pollSCM('* * * * *')
+    }
+    tools{
+        maven  'm3'
+        jdk 'jdk8'
+    }
+
+    stages {
+        stage('Clean Ws') {
+            steps{
+                cleanWs()
+            }
+        }
+        stage('Git CheckoutOut'){
+            steps{
+                checkout scm
+            }
+        }
+        stage('Compile') {
+            steps {
+                sh 'mvn compile'
+            }
+        }
+
+         stage('Unit Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+         stage('Package') {
+            steps {
+                sh 'mvn package'
+            }
         }
     }
-     stage('Test') {
-        withMaven(jdk: 'jdk8', maven:'m3') {
-            sh 'mvn test'
 
+    post {
+        always {
+            echo 'ALL GOOD '
         }
     }
 
-     stage('Package') {
-        withMaven(jdk: 'jdk8', maven:'m3') {
-            sh 'mvn package'
-        }
-    }
-
-    stage('Upload To Artifactory') {
-        withMaven(jdk: 'jdk8', maven:'m3') {
-            sh 'mvn install'
-        }
-    }
-    stage('Who Completed') {
-        sh "echo ${Author}"
-    }
 
 }
+
+
+// && 
